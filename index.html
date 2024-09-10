@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>寵物品種識別</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -27,66 +28,57 @@
 </head>
 <body>
     <h1>寵物品種識別</h1>
-    <form id="uploadForm">
-        <input type="file" id="imageInput" accept="image/*" required>
-        <button type="submit">上傳並識別</button>
-    </form>
-    <img id="imagePreview" alt="預覽圖片">
-    <div id="loading">正在識別中...</div>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="uploadImage()">上傳並識別</button>
     <div id="result"></div>
+    <img id="uploadedImage" style="max-width: 100%; display: none;">
 
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        const uploadForm = document.getElementById('uploadForm');
-        const imageInput = document.getElementById('imageInput');
-        const imagePreview = document.getElementById('imagePreview');
-        const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
+        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
+        const apiUrl = corsProxy + 'http://54.254.194.136:183/dog-predict';
 
-        const IMGBB_API_KEY = 'b7c58ee8d4e13b1f78c7c6b6d8c7c46f';
-        const DOG_PREDICT_API = 'http://54.254.194.136:183/dog-predict';
+        async function uploadImage() {
+            const input = document.getElementById('imageInput');
+            const resultDiv = document.getElementById('result');
+            const uploadedImage = document.getElementById('uploadedImage');
 
-        uploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const file = imageInput.files[0];
-            if (!file) return;
-
-            loading.style.display = 'block';
-            result.textContent = '';
-
-            try {
-                // 上傳圖片到ImgBB
-                const formData = new FormData();
-                formData.append('image', file);
-                const imgbbResponse = await axios.post('https://api.imgbb.com/1/upload', formData, {
-                    params: { key: IMGBB_API_KEY }
-                });
-
-                const imageUrl = imgbbResponse.data.data.url;
-
-                // 發送圖片URL到寵物識別API
-                const apiResponse = await axios.post(DOG_PREDICT_API, { url: imageUrl });
-
-                // 顯示結果
-                result.textContent = JSON.stringify(apiResponse.data, null, 2);
-            } catch (error) {
-                console.error('Error:', error);
-                result.textContent = '識別過程中發生錯誤，請稍後再試。';
-            } finally {
-                loading.style.display = 'none';
+            if (!input.files || input.files.length === 0) {
+                resultDiv.innerText = '請選擇一張圖片。';
+                return;
             }
-        });
 
-        imageInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    imagePreview.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
-            }
-        });
+            const file = input.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                uploadedImage.src = e.target.result;
+                uploadedImage.style.display = 'block';
+
+                resultDiv.innerText = '正在識別中...';
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+
+                    const response = await axios.post(apiUrl, formData, {
+                        headers: {
+                            'Content-Type': 'multipart/form-data'
+                        }
+                    });
+
+                    if (response.data && response.data.predicted_breed) {
+                        resultDiv.innerText = `識別結果：${response.data.predicted_breed}`;
+                    } else {
+                        resultDiv.innerText = '無法識別品種，請再試一次。';
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    resultDiv.innerText = '識別過程中發生錯誤，請稍後再試。';
+                }
+            };
+
+            reader.readAsDataURL(file);
+        }
     </script>
 </body>
 </html>
