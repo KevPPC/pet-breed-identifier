@@ -59,12 +59,20 @@ async function uploadToS3(file) {
             ACL: 'public-read'
         };
 
-        s3.upload(params, (err, data) => {
+        // 確保在上傳之前憑證已經加載
+        AWS.config.credentials.get(function(err) {
             if (err) {
-                reject(err);
-            } else {
-                resolve(data.Location);
+                reject('Error loading credentials: ' + err);
+                return;
             }
+
+            s3.upload(params, (err, data) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(data.Location);
+                }
+            });
         });
     });
 }
