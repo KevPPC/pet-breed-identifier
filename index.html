@@ -32,8 +32,8 @@
     <button onclick="predict()">Predict</button>
     <input type="file" id="imageUpload" accept="image/*">
     <div id="loading">Predicting...</div>
-    <div id="result"></div>
     <img id="preview" src="" alt="Image preview">
+    <div id="result"></div>
 
     <script>
         const API_ENDPOINT = '/.netlify/functions/api-proxy';
@@ -65,7 +65,7 @@
                 }
 
                 const data = await response.json();
-                displayResult({ inference_time: inferenceTime, prediction: data });
+                displayResult(data, inferenceTime);
                 document.getElementById('preview').src = imageUrl;
             } catch (error) {
                 console.error('Error:', error);
@@ -87,11 +87,9 @@
             reader.readAsDataURL(file);
         });
 
-        function displayResult(data) {
-            let resultText = `Inference time: ${data.inference_time}s\n`;
-            for (const [breed, probability] of Object.entries(data.prediction)) {
-                resultText += `${breed}: ${probability}\n`;
-            }
+        function displayResult(data, inferenceTime) {
+            let resultText = `Inference time: ${inferenceTime}s\n\n`;
+            resultText += JSON.stringify(data, null, 2);
             document.getElementById('result').textContent = resultText;
         }
     </script>
