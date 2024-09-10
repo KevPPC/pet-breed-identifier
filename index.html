@@ -1,10 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寵物品種識別</title>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <title>Dog Breed Predictor</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,83 +11,67 @@
             margin: 0 auto;
             padding: 20px;
         }
-        #imagePreview {
-            max-width: 100%;
-            margin-top: 20px;
-        }
         #result {
             margin-top: 20px;
-            font-weight: bold;
             white-space: pre-wrap;
+            font-family: monospace;
         }
-        #loading {
-            display: none;
+        #preview {
+            max-width: 100%;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <h1>寵物品種識別</h1>
-    <input type="file" id="imageInput" accept="image/*">
-    <button onclick="uploadImage()">上傳並識別</button>
+    <h1>Dog Breed Predictor</h1>
+    <input type="text" id="imageUrl" placeholder="Enter image URL">
+    <button onclick="predict()">Predict</button>
+    <input type="file" id="imageUpload" accept="image/*">
     <div id="result"></div>
-    <img id="uploadedImage" style="max-width: 100%; display: none;">
+    <img id="preview" src="" alt="Image preview">
 
     <script>
-        const corsProxies = [
-            'https://api.allorigins.win/raw?url=',
-            'https://yacdn.org/proxy/',
-            'https://cors-anywhere.herokuapp.com/'
-        ];
-        const apiUrl = 'http://54.254.194.136:183/dog-predict';
-
-        async function uploadImage() {
-            const input = document.getElementById('imageInput');
-            const resultDiv = document.getElementById('result');
-            const uploadedImage = document.getElementById('uploadedImage');
-
-            if (!input.files || input.files.length === 0) {
-                resultDiv.innerText = '請選擇一張圖片。';
+        function predict() {
+            const imageUrl = document.getElementById('imageUrl').value;
+            if (!imageUrl) {
+                alert('Please enter an image URL');
                 return;
             }
 
-            const file = input.files[0];
+            // 模拟预测过程
+            setTimeout(() => {
+                const mockResult = {
+                    inference_time: 4.0639,
+                    prediction: {
+                        "Finnish Spitz": "43.16%",
+                        "Portuguese Podengo": "38.40%",
+                        "Basenji": "6.83%"
+                    }
+                };
+                displayResult(mockResult);
+                document.getElementById('preview').src = imageUrl;
+            }, 2000); // 模拟2秒的处理时间
+        }
+
+        document.getElementById('imageUpload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
             const reader = new FileReader();
 
-            reader.onload = async function(e) {
-                uploadedImage.src = e.target.result;
-                uploadedImage.style.display = 'block';
-
-                resultDiv.innerText = '正在識別中...';
-
-                for (const corsProxy of corsProxies) {
-                    try {
-                        const formData = new FormData();
-                        formData.append('file', file);
-
-                        const response = await axios.post(corsProxy + apiUrl, formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        });
-
-                        if (response.data && response.data.predicted_breed) {
-                            resultDiv.innerText = `識別結果：${response.data.predicted_breed}`;
-                            return;
-                        } else {
-                            resultDiv.innerText = '無法識別品種，請再試一次。';
-                        }
-                    } catch (error) {
-                        console.error('Error with proxy:', corsProxy, error);
-                        resultDiv.innerText = '識別過程中發生錯誤，正在嘗試其他方法...';
-                    }
-                }
-                resultDiv.innerText = '所有嘗試都失敗了，請稍後再試。';
-            };
+            reader.onload = function(e) {
+                document.getElementById('imageUrl').value = e.target.result;
+                document.getElementById('preview').src = e.target.result;
+            }
 
             reader.readAsDataURL(file);
+        });
+
+        function displayResult(data) {
+            let resultText = `Inference time: ${data.inference_time}s\n`;
+            for (const [breed, probability] of Object.entries(data.prediction)) {
+                resultText += `${breed}: ${probability}\n`;
+            }
+            document.getElementById('result').textContent = resultText;
         }
     </script>
-</body>
-</html>
 </body>
 </html>
