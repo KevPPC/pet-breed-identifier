@@ -20,6 +20,10 @@
             max-width: 100%;
             margin-top: 20px;
         }
+        #loading {
+            display: none;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -27,30 +31,48 @@
     <input type="text" id="imageUrl" placeholder="Enter image URL">
     <button onclick="predict()">Predict</button>
     <input type="file" id="imageUpload" accept="image/*">
+    <div id="loading">Predicting...</div>
     <div id="result"></div>
     <img id="preview" src="" alt="Image preview">
 
     <script>
-        function predict() {
+        const API_ENDPOINT = 'http://54.254.194.136:183//dog-predict'; // 替换为实际的API端点
+
+        async function predict() {
             const imageUrl = document.getElementById('imageUrl').value;
             if (!imageUrl) {
                 alert('Please enter an image URL');
                 return;
             }
 
-            // 模拟预测过程
-            setTimeout(() => {
-                const mockResult = {
-                    inference_time: 4.0639,
-                    prediction: {
-                        "Finnish Spitz": "43.16%",
-                        "Portuguese Podengo": "38.40%",
-                        "Basenji": "6.83%"
-                    }
-                };
-                displayResult(mockResult);
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').textContent = '';
+
+            try {
+                const startTime = performance.now();
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: imageUrl }),
+                });
+                const endTime = performance.now();
+                const inferenceTime = ((endTime - startTime) / 1000).toFixed(4);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResult({ inference_time: inferenceTime, prediction: data });
                 document.getElementById('preview').src = imageUrl;
-            }, 2000); // 模拟2秒的处理时间
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').textContent = 'An error occurred: ' + error.message;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
         }
 
         document.getElementById('imageUpload').addEventListener('change', function(event) {
