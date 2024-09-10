@@ -34,8 +34,12 @@
     <img id="uploadedImage" style="max-width: 100%; display: none;">
 
     <script>
-        const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-        const apiUrl = corsProxy + 'http://54.254.194.136:183/dog-predict';
+        const corsProxies = [
+            'https://api.allorigins.win/raw?url=',
+            'https://yacdn.org/proxy/',
+            'https://cors-anywhere.herokuapp.com/'
+        ];
+        const apiUrl = 'http://54.254.194.136:183/dog-predict';
 
         async function uploadImage() {
             const input = document.getElementById('imageInput');
@@ -56,29 +60,35 @@
 
                 resultDiv.innerText = '正在識別中...';
 
-                try {
-                    const formData = new FormData();
-                    formData.append('file', file);
+                for (const corsProxy of corsProxies) {
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', file);
 
-                    const response = await axios.post(apiUrl, formData, {
-                        headers: {
-                            'Content-Type': 'multipart/form-data'
+                        const response = await axios.post(corsProxy + apiUrl, formData, {
+                            headers: {
+                                'Content-Type': 'multipart/form-data'
+                            }
+                        });
+
+                        if (response.data && response.data.predicted_breed) {
+                            resultDiv.innerText = `識別結果：${response.data.predicted_breed}`;
+                            return;
+                        } else {
+                            resultDiv.innerText = '無法識別品種，請再試一次。';
                         }
-                    });
-
-                    if (response.data && response.data.predicted_breed) {
-                        resultDiv.innerText = `識別結果：${response.data.predicted_breed}`;
-                    } else {
-                        resultDiv.innerText = '無法識別品種，請再試一次。';
+                    } catch (error) {
+                        console.error('Error with proxy:', corsProxy, error);
+                        resultDiv.innerText = '識別過程中發生錯誤，正在嘗試其他方法...';
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    resultDiv.innerText = '識別過程中發生錯誤，請稍後再試。';
                 }
+                resultDiv.innerText = '所有嘗試都失敗了，請稍後再試。';
             };
 
             reader.readAsDataURL(file);
         }
     </script>
+</body>
+</html>
 </body>
 </html>
