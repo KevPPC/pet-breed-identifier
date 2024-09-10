@@ -18,6 +18,7 @@
         #result {
             margin-top: 20px;
             font-weight: bold;
+            white-space: pre-wrap;
         }
         #loading {
             display: none;
@@ -34,8 +35,58 @@
     <div id="loading">正在識別中...</div>
     <div id="result"></div>
 
-    <script src="https://sdk.amazonaws.com/js/aws-sdk-2.1001.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="script.js"></script>
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreview = document.getElementById('imagePreview');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        const IMGBB_API_KEY = 'b7c58ee8d4e13b1f78c7c6b6d8c7c46f';
+        const DOG_PREDICT_API = 'http://XXX.XXX.XXX.XXX:183/dog-predict';
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = imageInput.files[0];
+            if (!file) return;
+
+            loading.style.display = 'block';
+            result.textContent = '';
+
+            try {
+                // 上傳圖片到ImgBB
+                const formData = new FormData();
+                formData.append('image', file);
+                const imgbbResponse = await axios.post('https://api.imgbb.com/1/upload', formData, {
+                    params: { key: IMGBB_API_KEY }
+                });
+
+                const imageUrl = imgbbResponse.data.data.url;
+
+                // 發送圖片URL到寵物識別API
+                const apiResponse = await axios.post(DOG_PREDICT_API, { url: imageUrl });
+
+                // 顯示結果
+                result.textContent = JSON.stringify(apiResponse.data, null, 2);
+            } catch (error) {
+                console.error('Error:', error);
+                result.textContent = '識別過程中發生錯誤，請稍後再試。';
+            } finally {
+                loading.style.display = 'none';
+            }
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    </script>
 </body>
 </html>
