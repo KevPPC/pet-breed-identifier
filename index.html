@@ -36,7 +36,7 @@
     <img id="preview" src="" alt="Image preview">
 
     <script>
-        const API_ENDPOINT = 'http://54.254.194.136:183/dog-predict'; // 替换为实际的API端点
+        const API_ENDPOINT = '/.netlify/functions/api-proxy';
 
         async function predict() {
             const imageUrl = document.getElementById('imageUrl').value;
