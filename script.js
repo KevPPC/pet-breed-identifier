@@ -64,15 +64,21 @@ async function handleSubmit(event) {
         const imageUrl = await uploadImageToS3(file);
         console.log('Image uploaded, URL:', imageUrl);
 
-        // 這裡應該調用你的 API 進行寵物品種識別
-        // 以下是一個示例，你需要替換為實際的 API 調用
-        const response = await axios.post('http://54.254.194.136:183//dog-predict', { imageUrl: imageUrl });
-        const breed = response.data.breed; // 假設 API 返回一個包含 breed 的對象
+        // 顯示上傳後的 URL
+        document.getElementById('result').innerHTML = `
+            <p>上傳成功！</p>
+            <p>S3 URL: <a href="${imageUrl}" target="_blank">${imageUrl}</a></p>
+        `;
 
-        document.getElementById('result').textContent = `識別結果：${breed}`;
+        // 這裡可以添加調用 API 進行寵物品種識別的代碼
+        // 例如：
+        // const response = await axios.post('YOUR_API_ENDPOINT', { imageUrl: imageUrl });
+        // const breed = response.data.breed;
+        // document.getElementById('result').innerHTML += `<p>識別結果：${breed}</p>`;
+
     } catch (error) {
         console.error('處理圖片時發生錯誤:', error);
-        document.getElementById('result').textContent = '識別失敗，請稍後再試';
+        document.getElementById('result').textContent = '上傳失敗: ' + (error.message || '未知錯誤');
     } finally {
         document.getElementById('loading').style.display = 'none';
     }
